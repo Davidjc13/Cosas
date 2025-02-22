@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import numpy as np
 
 class Neuron:
@@ -10,7 +11,7 @@ class Neuron:
         Args:
             - input_size (int): Número de inputs para la neurona
         """
-        self.weights = np.random.randn(input_size)
+        self.weights = np.random.randn(input_size, 1)
         self.bias = np.random.randn()
 
     def sigmoid(self, x):
@@ -40,13 +41,13 @@ class Neuron:
         Returns:
             float: Output predicho
         """
-        self.inputs = inputs
-        ponderate_sum = np.dot(self.weights,self.inputs)
+        self.inputs = inputs.reshape(-1,1)
+
+        ponderate_sum = np.dot(self.inputs.T, self.weights)
         self.total = ponderate_sum + self.bias
 
         self.output = self.sigmoid(self.total)
-        
-        return self.output
+        return self.output.flatten()
 
     def backward(self, error, lr):
         """
@@ -59,11 +60,7 @@ class Neuron:
         Returns:
             float: Error ajustado.
         """
-
-        # Se calcula la derivada del error:
         d_error = error * self.derivada_sigmoide(self.output)
-
-        # Ajustamos los pesos
         self.weights -= lr * d_error * self.inputs
         self.bias -= lr * d_error
 
@@ -88,27 +85,25 @@ class Layer:
         Función para calcular la salida de la capa.
 
         Args:
-            - inputs (np.ndarray(float)): Array de numpy que entrará en la capa, se aplicará a todas las neuronas.
+            - inputs (np.ndarray(float)): Array 1D de numpy que entrará en la capa, se aplicará a todas las neuronas.
 
         Returns:
             - np.ndarray: Array con las salidas de todas las neuronas.
         """
-        self.inputs = inputs
-        self.outputs = np.array([
-            neuron.forward(self.inputs) for neuron in self.neurons
-            ])
-
+        self.inputs = inputs.ravel()  
+        self.outputs = np.array([neuron.forward(self.inputs) for neuron in self.neurons])
         return self.outputs
 
     def backward(self, errors, lr):
         """
         Función para propagar el error hacia atrás y actualizar pesos.
         """
-        next_errors = np.zeros_like(self.inputs)
-
+        next_errors = np.zeros_like(self.inputs, dtype=np.float64)
+        
+        errors = errors.reshape(-1)
         for index, neuron in enumerate(self.neurons):
-            next_errors += neuron.backward(errors[index],lr)
-
+            grad = neuron.backward(errors[index], lr).flatten()
+            next_errors += grad
         return next_errors
 
 class NeuralNetwork:
@@ -144,37 +139,62 @@ class NeuralNetwork:
 
     def backward(self, target, lr):
         """Propagación hacia atrás del error y actualización de pesos"""
-        error = target - self.layers[-1].outputs
+        error = self.layers[-1].outputs - target
         for layer in reversed(self.layers):
             error = layer.backward(error,lr)
 
-    def train(self, X, y, epochs, lr):
+    def train(self, X, y, epochs, lr, patience):
         """
         Método para entrenar la red neuronal.
         """
+        lowest_loss = float('inf')
+        patience_counter = 0
+        
+        with tqdm(total=epochs, desc="Entrenando red", unit="epoch") as pbar:
+            for epoch in range(epochs):
+                total_loss = 0
+                for x, t in zip(X, y):
+                    pred = self.forward(x)
+                    self.backward(t, lr)
+                    total_loss += np.mean((t - pred)**2)
+                
+                avg_loss = total_loss / len(X)
+                
 
-        for epoch in range(epochs):
-            for i in range(len(X)):
-                self.forward(X[i])
-                self.backward(y[i], lr)
-            
-            if epoch % 10 == 0:
-                loss = np.mean((y - self.forward(X))**2)
-                print(f"Epoch: {epoch}, Loss: {loss}")
+                pbar.set_postfix({
+                    'loss': f"{avg_loss:.4f}",
+                    'patience': f"{patience_counter}/{patience}"
+                })
+                pbar.update(1)
+
+                if avg_loss < lowest_loss:
+                    lowest_loss = avg_loss
+                    patience_counter = 0
+                else:
+                    patience_counter += 1
+                    if patience_counter == patience:
+                        pbar.set_postfix({
+                            'loss': f"{avg_loss:.4f}", 
+                            'status': 'Early Stopping!'
+                        })
+                        break
     
 # Para probar la red neuronal
 if __name__ == '__main__':
 
-    nn = NeuralNetwork(layer_sizes=[3,4,2])
+    nn = NeuralNetwork(layer_sizes=[2,4,1])
 
-    test_inputs = [
-        np.array([0.5, -0.2, 0.1]),
-        np.array([0.1, 0.4, -0.3]),
-        np.array([-0.6, 0.2, 0.9]),
-        np.array([0.8, -0.5, 0.3])
-    ]
+    # Datos XOR:
+    X = np.array([[0,0],[0,1],[1,0],[1,1]])
+    y = np.array([[0],[1],[1],[0]])
 
-    for index, input in enumerate(test_inputs):
-        output = nn.forward(input)
-        print(f"Prueba {index+1} - Entrada: {input} - Salida: {output}")
+    # Resultados sin entrenar:
+    for index in range(len(X)):
+        print(f"Entrada: {X[index]} - Salida predicha: {int(nn.forward(X[index]))} - Salida Real: {y[index]}")
 
+    # Entrenamiento:
+    nn.train(X, y, epochs=1000000, lr=0.01, patience=10)
+
+    # Resultados después de entrenar:
+    for index in range(len(X)):
+        print(f"Entrada: {X[index]} - Salida predicha: {int(nn.forward(X[index]))} - Salida Real: {y[index]}")
