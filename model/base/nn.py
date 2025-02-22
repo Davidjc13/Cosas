@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import numpy as np
 
 class Neuron:
@@ -10,7 +11,7 @@ class Neuron:
         Args:
             - input_size (int): Número de inputs para la neurona
         """
-        self.weights = np.random.randn(input_size)
+        self.weights = np.random.randn(input_size, 1)
         self.bias = np.random.randn()
 
     def sigmoid(self, x):
@@ -26,6 +27,10 @@ class Neuron:
         > los inputs y pesos más el sesgo
         """
         return 1/(1 + np.exp(-x))
+
+    def derivada_sigmoide(self, x):
+        """Derivada respecto x de la sigmoide"""
+        return x * (1 - x)
     
     def forward(self, inputs):
         """Función para calcular la salida de la neurona.
@@ -36,13 +41,30 @@ class Neuron:
         Returns:
             float: Output predicho
         """
+        self.inputs = inputs.reshape(-1,1)
 
-        ponderate_sum = np.dot(self.weights,inputs)
-        total = ponderate_sum + self.bias
+        ponderate_sum = np.dot(self.inputs.T, self.weights)
+        self.total = ponderate_sum + self.bias
 
-        output = self.sigmoid(total)
+        self.output = self.sigmoid(self.total)
+        return self.output.flatten()
+
+    def backward(self, error, lr):
+        """
+        Función `backward` para actualizar los pesos y el sesgo de la neurona
+
+        Args:
+            - error (float): Error de la predicción.
+            - lr (float): Ratio de aprendizaje de la neurona
         
-        return output
+        Returns:
+            float: Error ajustado.
+        """
+        d_error = error * self.derivada_sigmoide(self.output)
+        self.weights -= lr * d_error * self.inputs
+        self.bias -= lr * d_error
+
+        return d_error * self.weights
     
 class Layer:
     """Clase que representa una capa. Una capa está formada por varias neuronas
@@ -63,14 +85,26 @@ class Layer:
         Función para calcular la salida de la capa.
 
         Args:
-            - inputs (np.ndarray(float)): Array de numpy que entrará en la capa, se aplicará a todas las neuronas.
+            - inputs (np.ndarray(float)): Array 1D de numpy que entrará en la capa, se aplicará a todas las neuronas.
 
         Returns:
             - np.ndarray: Array con las salidas de todas las neuronas.
         """
-        return np.array([
-            neuron.forward(inputs) for neuron in self.neurons
-            ])
+        self.inputs = inputs.ravel()  
+        self.outputs = np.array([neuron.forward(self.inputs) for neuron in self.neurons])
+        return self.outputs
+
+    def backward(self, errors, lr):
+        """
+        Función para propagar el error hacia atrás y actualizar pesos.
+        """
+        next_errors = np.zeros_like(self.inputs, dtype=np.float64)
+        
+        errors = errors.reshape(-1)
+        for index, neuron in enumerate(self.neurons):
+            grad = neuron.backward(errors[index], lr).flatten()
+            next_errors += grad
+        return next_errors
 
 class NeuralNetwork:
     """Clase que representa una red de neuronas. Es decir
@@ -102,20 +136,73 @@ class NeuralNetwork:
             inputs = layer.forward(inputs)
 
         return inputs
+
+    def backward(self, target, lr):
+        """Propagación hacia atrás del error y actualización de pesos"""
+        error = self.layers[-1].outputs - target
+        for layer in reversed(self.layers):
+            error = layer.backward(error,lr)
+
+    def train(self, X, y, epochs, lr, patience):
+        """
+        Método para entrenar la red neuronal.
+
+        Args:
+            - X (np.ndarray): Inputs para entrenar.
+            - y (np.ndarray): Salida teórica del input.
+            - epochs (int): Número máximo de épocas que debe durar el entrenamiento.
+            - lr (float): Learning rate/ tasa de aprendizaje.
+            - patience (int): Margen de épocas en las que el modelo debe mejorar. 
+                            Si se iguala, se detiene el entrenamiento
+        """
+        lowest_loss = float('inf')
+        patience_counter = 0
+        
+        with tqdm(total=epochs, desc="Entrenando Red Neuronal:", unit="epoch") as progress_bar:
+            for epoch in range(epochs):
+                total_loss = 0
+                for x, t in zip(X, y):
+                    pred = self.forward(x)
+                    self.backward(t, lr)
+                    total_loss += np.mean((t - pred)**2)
+                
+                avg_loss = total_loss / len(X)
+                
+
+                progress_bar.set_postfix({
+                    'loss': f"{avg_loss:.4f}",
+                    'patience': f"{patience_counter}/{patience}"
+                })
+                progress_bar.update(1)
+
+                if avg_loss < lowest_loss:
+                    lowest_loss = avg_loss
+                    patience_counter = 0
+                else:
+                    patience_counter += 1
+                    if patience_counter == patience:
+                        progress_bar.set_postfix({
+                            'loss': f"{avg_loss:.4f}", 
+                            'status': 'Early Stopping!'
+                        })
+                        break
     
 # Para probar la red neuronal
 if __name__ == '__main__':
 
-    nn = NeuralNetwork(layer_sizes=[3,4,2])
+    nn = NeuralNetwork(layer_sizes=[2,4,1])
 
-    test_inputs = [
-        np.array([0.5, -0.2, 0.1]),
-        np.array([0.1, 0.4, -0.3]),
-        np.array([-0.6, 0.2, 0.9]),
-        np.array([0.8, -0.5, 0.3])
-    ]
+    # Datos XOR:
+    X = np.array([[0,0],[0,1],[1,0],[1,1]])
+    y = np.array([[0],[1],[1],[0]])
 
-    for index, input in enumerate(test_inputs):
-        output = nn.forward(input)
-        print(f"Prueba {index+1} - Entrada: {input} - Salida: {output}")
+    # Resultados sin entrenar:
+    for index in range(len(X)):
+        print(f"Entrada: {X[index]} - Salida predicha: {1 if nn.forward(X[index]) > .5 else 0} - Salida Real: {y[index]}")
 
+    # Entrenamiento:
+    nn.train(X, y, epochs=100000, lr=0.01, patience=10)
+
+    # Resultados después de entrenar:
+    for index in range(len(X)):
+        print(f"Entrada: {X[index]} - Salida predicha: {1 if nn.forward(X[index]) > .5 else 0} - Salida Real: {y[index]}")
