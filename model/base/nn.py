@@ -146,11 +146,19 @@ class NeuralNetwork:
     def train(self, X, y, epochs, lr, patience):
         """
         Método para entrenar la red neuronal.
+
+        Args:
+            - X (np.ndarray): Inputs para entrenar.
+            - y (np.ndarray): Salida teórica del input.
+            - epochs (int): Número máximo de épocas que debe durar el entrenamiento.
+            - lr (float): Learning rate/ tasa de aprendizaje.
+            - patience (int): Margen de épocas en las que el modelo debe mejorar. 
+                            Si se iguala, se detiene el entrenamiento
         """
         lowest_loss = float('inf')
         patience_counter = 0
         
-        with tqdm(total=epochs, desc="Entrenando red", unit="epoch") as pbar:
+        with tqdm(total=epochs, desc="Entrenando Red Neuronal:", unit="epoch") as progress_bar:
             for epoch in range(epochs):
                 total_loss = 0
                 for x, t in zip(X, y):
@@ -161,11 +169,11 @@ class NeuralNetwork:
                 avg_loss = total_loss / len(X)
                 
 
-                pbar.set_postfix({
+                progress_bar.set_postfix({
                     'loss': f"{avg_loss:.4f}",
                     'patience': f"{patience_counter}/{patience}"
                 })
-                pbar.update(1)
+                progress_bar.update(1)
 
                 if avg_loss < lowest_loss:
                     lowest_loss = avg_loss
@@ -173,7 +181,7 @@ class NeuralNetwork:
                 else:
                     patience_counter += 1
                     if patience_counter == patience:
-                        pbar.set_postfix({
+                        progress_bar.set_postfix({
                             'loss': f"{avg_loss:.4f}", 
                             'status': 'Early Stopping!'
                         })
@@ -190,11 +198,11 @@ if __name__ == '__main__':
 
     # Resultados sin entrenar:
     for index in range(len(X)):
-        print(f"Entrada: {X[index]} - Salida predicha: {int(nn.forward(X[index]))} - Salida Real: {y[index]}")
+        print(f"Entrada: {X[index]} - Salida predicha: {1 if nn.forward(X[index]) > .5 else 0} - Salida Real: {y[index]}")
 
     # Entrenamiento:
-    nn.train(X, y, epochs=1000000, lr=0.01, patience=10)
+    nn.train(X, y, epochs=100000, lr=0.01, patience=10)
 
     # Resultados después de entrenar:
     for index in range(len(X)):
-        print(f"Entrada: {X[index]} - Salida predicha: {int(nn.forward(X[index]))} - Salida Real: {y[index]}")
+        print(f"Entrada: {X[index]} - Salida predicha: {1 if nn.forward(X[index]) > .5 else 0} - Salida Real: {y[index]}")
