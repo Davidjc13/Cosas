@@ -26,6 +26,10 @@ class Neuron:
         > los inputs y pesos más el sesgo
         """
         return 1/(1 + np.exp(-x))
+
+    def derivada_sigmoide(self, x):
+        """Derivada respecto x de la sigmoide"""
+        return x * (1 - x)
     
     def forward(self, inputs):
         """Función para calcular la salida de la neurona.
@@ -36,13 +40,34 @@ class Neuron:
         Returns:
             float: Output predicho
         """
+        self.inputs = inputs
+        ponderate_sum = np.dot(self.weights,self.inputs)
+        self.total = ponderate_sum + self.bias
 
-        ponderate_sum = np.dot(self.weights,inputs)
-        total = ponderate_sum + self.bias
-
-        output = self.sigmoid(total)
+        self.output = self.sigmoid(self.total)
         
-        return output
+        return self.output
+
+    def backward(self, error, lr):
+        """
+        Función `backward` para actualizar los pesos y el sesgo de la neurona
+
+        Args:
+            - error (float): Error de la predicción.
+            - lr (float): Ratio de aprendizaje de la neurona
+        
+        Returns:
+            float: Error ajustado.
+        """
+
+        # Se calcula la derivada del error:
+        d_error = error * self.derivada_sigmoide(self.output)
+
+        # Ajustamos los pesos
+        self.weights -= lr * d_error * self.inputs
+        self.bias -= lr * d_error
+
+        return d_error * self.weights
     
 class Layer:
     """Clase que representa una capa. Una capa está formada por varias neuronas
@@ -68,9 +93,23 @@ class Layer:
         Returns:
             - np.ndarray: Array con las salidas de todas las neuronas.
         """
-        return np.array([
-            neuron.forward(inputs) for neuron in self.neurons
+        self.inputs = inputs
+        self.outputs = np.array([
+            neuron.forward(self.inputs) for neuron in self.neurons
             ])
+
+        return self.outputs
+
+    def backward(self, errors, lr):
+        """
+        Función para propagar el error hacia atrás y actualizar pesos.
+        """
+        next_errors = np.zeros_like(self.inputs)
+
+        for index, neuron in enumerate(self.neurons):
+            next_errors += neuron.backward(errors[index],lr)
+
+        return next_errors
 
 class NeuralNetwork:
     """Clase que representa una red de neuronas. Es decir
@@ -102,6 +141,26 @@ class NeuralNetwork:
             inputs = layer.forward(inputs)
 
         return inputs
+
+    def backward(self, target, lr):
+        """Propagación hacia atrás del error y actualización de pesos"""
+        error = target - self.layers[-1].outputs
+        for layer in reversed(self.layers):
+            error = layer.backward(error,lr)
+
+    def train(self, X, y, epochs, lr):
+        """
+        Método para entrenar la red neuronal.
+        """
+
+        for epoch in range(epochs):
+            for i in range(len(X)):
+                self.forward(X[i])
+                self.backward(y[i], lr)
+            
+            if epoch % 10 == 0:
+                loss = np.mean((y - self.forward(X))**2)
+                print(f"Epoch: {epoch}, Loss: {loss}")
     
 # Para probar la red neuronal
 if __name__ == '__main__':
