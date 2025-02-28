@@ -6,3 +6,5 @@ llama-index
 unstructured
 sentence-transformers
 langchain-community
+fastapi
+uvicorn
