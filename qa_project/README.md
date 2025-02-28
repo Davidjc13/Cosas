@@ -24,19 +24,23 @@ Sistema de preguntas y respuestas contextuales utilizando Retrieval-Augmented Ge
 
 
 # 1. Clonar repositorio
+```bash
 git clone [https://github.com/Davidjc13/Portfolio.git](https://github.com/Davidjc13/Portfolio)
 cd qa_project
+```
 
 # 2. Crear entorno virtual
+```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
 # venv\Scripts\activate  # Windows
+```
 
 # 3. Instalar dependencias
-pip install -r requirements.txt
+`pip install -r requirements.txt`
 
 # 4. Configurar variables de entorno
-cp .env.example .env
+`cp .env.example .env`
 # Editar .env con tu API_KEY
 
 # Configuración de Documentos 📂
