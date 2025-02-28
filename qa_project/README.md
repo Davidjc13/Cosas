@@ -22,10 +22,10 @@ Sistema de preguntas y respuestas contextuales utilizando Retrieval-Augmented Ge
 
 ## Instalación ⚙️
 
-```bash
+
 # 1. Clonar repositorio
-git clone https://github.com/tu-usuario/qa-rag-system.git
-cd qa-rag-system
+git clone [https://github.com/Davidjc13/Portfolio.git](https://github.com/Davidjc13/Portfolio)
+cd qa_project
 
 # 2. Crear entorno virtual
 python -m venv venv
