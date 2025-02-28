@@ -8,15 +8,15 @@ Este repositorio contiene los siguientes elementos:
 
 ### 🔹 Inteligencia Artificial
 - **Construcción de una red neuronal básica** 🤖
+
 - **Módulo de preguntas y respuestas con DeepSeek + API (FastAPI)** 🤖
+
 
 ### 🔹 Herramientas Útiles
 - **Scripts para facilitar tareas de IA y Ciencia de Datos** 🛠️
 
 ### 🔹 Apuntes Universitarios
 - **Notas y resúmenes sobre IA y Ciencia de Datos** 📚
-
-
 
 ## 📬 Contacto
 Si tienes alguna pregunta o sugerencia, no dudes en contactarme:
