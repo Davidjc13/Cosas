@@ -1,0 +1,1 @@
+La inteligencia artificial moderna comenzó en 1956 con la conferencia de Dartmouth. Alan Turing sentó las bases teóricas con su artículo "Computing Machinery and Intelligence" (1950). Los hitos recientes incluyen AlphaGo de DeepMind (2016) y GPT-3 de OpenAI (2020).
