@@ -9,28 +9,14 @@ Este repositorio contiene los siguientes elementos:
 ### 🔹 Inteligencia Artificial
 - **Construcción de una red neuronal básica** 🤖
 
+- **Módulo de preguntas y respuestas con DeepSeek + API (FastAPI)** 🤖
+
+
 ### 🔹 Herramientas Útiles
 - **Scripts para facilitar tareas de IA y Ciencia de Datos** 🛠️
 
 ### 🔹 Apuntes Universitarios
 - **Notas y resúmenes sobre IA y Ciencia de Datos** 📚
-
-## 🛠️ Tecnologías y Herramientas
-- **Lenguaje:** Python 🐍
-- **Bibliotecas:** NumPy, Pandas
-- **Entorno:** Jupyter Notebook, VS Code
-
-## 🚀 Cómo Usar
-Para ejecutar los scripts, sigue estos pasos:
-1. Clona este repositorio:
-   ```bash
-   git clone https://github.com/tu-usuario/tu-repo.git
-   ```
-2. Instala las dependencias necesarias:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Explora los notebooks y scripts en la carpeta correspondiente.
 
 ## 📬 Contacto
 Si tienes alguna pregunta o sugerencia, no dudes en contactarme:

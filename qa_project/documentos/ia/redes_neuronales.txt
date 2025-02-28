@@ -1,0 +1,1 @@
+Las redes neuronales artificiales están inspiradas en el cerebro biológico. Una capa oculta típica procesa información mediante funciones de activación como ReLU. El aprendizaje profundo utiliza redes con múltiples capas ocultas.
